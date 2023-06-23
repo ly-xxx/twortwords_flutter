@@ -97,3 +97,48 @@ class EnglishWord {
         "exchange": exchange,
       };
 }
+
+class SimpleWord {
+  SimpleWord({
+    required this.id,
+    required this.word,
+    required this.times,
+    required this.learn,
+    required this.note,
+  });
+
+  int id;
+  String word;
+  String times;
+  String learn;
+  String note;
+
+  factory SimpleWord.fromRawJson(String str) =>
+      SimpleWord.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
+  factory SimpleWord.fromJson(Map<String, dynamic> json) => SimpleWord(
+      id: json["id"],
+      word: json["word"],
+      times: json["times"],
+      learn: json["learn"],
+      note: json["note"],
+  );
+
+  factory SimpleWord.fromRow(Row row) => SimpleWord(
+      id: row['id'],
+      word: row['word'].toString(),
+      times: row['times'].toString(),
+      learn: row['learn'].toString(),
+      note: row['note'].toString(),
+      );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "word": word,
+    "times": times,
+    "learn": learn,
+    "note": note,
+  };
+}

@@ -46,7 +46,7 @@ dependencies:
   flutter_scalable_ocr: ^2.0.0
   flutter_tts: ^3.7.0
   fl_chart: ^0.63.0
-
+  provider: ^6.0.5
 #  camera: ^0.10.5+2
 
 

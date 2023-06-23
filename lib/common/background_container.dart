@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class BackgroundContainer extends StatefulWidget {
-  BackgroundContainer({required this.child, this.opacity, Key? key})
+  const BackgroundContainer({required this.child, this.opacity, Key? key})
       : super(key: key);
 
-  Widget child;
+  final Widget child;
   final double? opacity;
 
   @override

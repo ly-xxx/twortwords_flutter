@@ -15,7 +15,7 @@ class DictionaryDataBaseHelper {
     await CommonPreferences.init();
 
     io.Directory applicationDirectory =
-    await getApplicationDocumentsDirectory();
+        await getApplicationDocumentsDirectory();
 
     if (!await applicationDirectory.exists()) {
       await applicationDirectory.create(recursive: true);
@@ -24,9 +24,9 @@ class DictionaryDataBaseHelper {
     if (!await io.File(p.join(applicationDirectory.path, 'stardict.db'))
         .exists()) {
       ByteData data =
-      await rootBundle.load(p.join("assets/db/", "stardict.db"));
+          await rootBundle.load(p.join("assets/db/", "stardict.db"));
       List<int> bytes =
-      data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 
       // Write and flush the bytes written
       await io.File(p.join(applicationDirectory.path, 'stardict.db'))
@@ -38,7 +38,7 @@ class DictionaryDataBaseHelper {
 
   Future<void> initMyselfDB({io.File? myDB}) async {
     io.Directory applicationDirectory =
-    await getApplicationDocumentsDirectory();
+        await getApplicationDocumentsDirectory();
     if (myDB == null) {
       if (!await applicationDirectory.exists()) {
         await applicationDirectory.create(recursive: true);
@@ -47,17 +47,24 @@ class DictionaryDataBaseHelper {
       // if (!await io.File(p.join(applicationDirectory.path, 'myself.db'))
       //     .exists()) {
       await io.File(p.join(applicationDirectory.path, 'myself.db')).create();
-      _dbMyself =
-          sqlite3.open(p.join(applicationDirectory.path, 'myself.db'));
+      _dbMyself = sqlite3.open(p.join(applicationDirectory.path, 'myself.db'));
       _dbMyself.execute('''
         CREATE TABLE IF NOT EXISTS learn (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               word VARCHAR(64) NOT NULL UNIQUE,
-              sw VARCHAR(64),
-              status VARCHAR(16),
+              times VARCHAR(16),
+              learn VARCHAR(16),
               note TEXT
           );
         ''');
+      final ResultSet resultSet =
+      _dbUsing.select('SELECT * FROM stardict WHERE tag LIKE \'%ky%\'');
+      print(resultSet);
+      for (final Row row in resultSet) {
+        _dbMyself.execute(
+            'INSERT INTO learn (word, times, learn, note) VALUES (\'${row['word']}\', \'0\', \'0\', \'\')');
+        print(row['word']);
+      }
       // }
     }
     // }
@@ -65,17 +72,15 @@ class DictionaryDataBaseHelper {
 
   addWordsFromFilter(String filter) async {
     io.Directory applicationDirectory =
-    await getApplicationDocumentsDirectory();
-    _dbMyself =
-        sqlite3.open(p.join(applicationDirectory.path, 'myself.db'));
+        await getApplicationDocumentsDirectory();
+    _dbMyself = sqlite3.open(p.join(applicationDirectory.path, 'myself.db'));
     final ResultSet resultSet =
-    _dbUsing.select('SELECT * FROM stardict WHERE tag LIKE \'%$filter%\'');
-
-    // You can iterate on the result set in multiple ways to retrieve Row objects
-    // one by one.
+        _dbUsing.select('SELECT * FROM stardict WHERE tag LIKE \'%$filter%\'');
+    print(resultSet);
     for (final Row row in resultSet) {
       _dbMyself.execute(
-          'INSERT INTO learn VALUES (${row['id']}, \'${row['word']}\', \'${row['sw']}\', \'0\', \'\')');
+          'INSERT INTO learn (word, times, learn, note) VALUES (\'${row['word']}\', \'0\', \'0\', \'\')');
+      print(row['word']);
     }
   }
 
@@ -107,8 +112,35 @@ class DictionaryDataBaseHelper {
     return defList;
   }
 
-  String randomWord() {
-    return _dbMyself.select(
-        'SELECT * FROM learn ORDER BY random() LIMIT 1').first['word'];
+  EnglishWord searchSingleWordFromAll(String tar) {
+    final ResultSet resultSet = _dbUsing
+        .select('SELECT * FROM stardict WHERE word LIKE \'$tar\' LIMIT 1');
+
+    EnglishWord def = EnglishWord.fromRow(resultSet.first);
+    return def;
+  }
+
+  EnglishWord learnANewWord() {
+    SimpleWord wd;
+    while (true) {
+      wd = randomWord();
+      if (wd.times == '0') break;
+    }
+    wd.times = '1';
+    wd.learn = '0';
+    updateLearningWords(wd);
+    return searchSingleWordFromAll(wd.word);
+  }
+
+  updateLearningWords(SimpleWord sw) {
+    _dbMyself.select(
+        '''UPDATE learn SET word = \'${sw.word}\', times = \'${sw.times}\', 
+        learn = \'${sw.learn}\', note = \'${sw.note}\' WHERE id = \'${sw.id}\'''');
+  }
+
+  SimpleWord randomWord() {
+    final ResultSet resultSet = _dbMyself
+        .select('SELECT * FROM learn ORDER BY random() LIMIT 1');
+    return SimpleWord.fromRow(resultSet.first);
   }
 }
