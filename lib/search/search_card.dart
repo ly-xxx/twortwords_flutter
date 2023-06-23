@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:ui';
 
 import 'package:bobwords/common/fade_and_offstage.dart';
 import 'package:bobwords/common/text_util.dart';
 import 'package:bobwords/search/widgets/static_item.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_scalable_ocr/flutter_scalable_ocr.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -149,7 +147,7 @@ class _SearchCardState extends State<SearchCard> with WidgetsBindingObserver {
               filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
               child: AnimatedContainer(
                 height: 1.sh -
-                    82.h -
+                    112.h -
                     MediaQuery.of(context).padding.top -
                     keyboardHeight,
                 margin: EdgeInsets.fromLTRB(6.h, 0, 6.h, 0),

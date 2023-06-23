@@ -44,7 +44,11 @@ dependencies:
   shared_preferences: ^2.1.2
   extended_image: ^8.0.2
   flutter_scalable_ocr: ^2.0.0
-  camera: ^0.10.5+2
+  flutter_tts: ^3.7.0
+  fl_chart: ^0.63.0
+
+#  camera: ^0.10.5+2
+
 
 dev_dependencies:
   flutter_test:
