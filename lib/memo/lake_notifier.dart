@@ -1,6 +1,7 @@
 import 'package:bobwords/common/model/english_word.dart';
 import 'package:bobwords/db_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 enum LakePageStatus {
   unload,
@@ -10,7 +11,7 @@ enum LakePageStatus {
 }
 
 class LakeArea {
-  final Map<int, EnglishWord> dataList;
+  final List<EnglishWord> dataList;
   final ScrollController controller;
   late LakePageStatus status;
   int currentCard = 0;
@@ -18,7 +19,7 @@ class LakeArea {
   LakeArea._(this.dataList, this.controller, LakePageStatus unload);
 
   factory LakeArea.empty() {
-    return LakeArea._({}, ScrollController(), LakePageStatus.unload);
+    return LakeArea._([], ScrollController(), LakePageStatus.unload);
   }
 }
 
@@ -51,7 +52,7 @@ class LakeModel extends ChangeNotifier {
 
   void initLakeArea(int index, ScrollController sController) {
     LakeArea lakeArea =
-        LakeArea._({}, ScrollController(), LakePageStatus.unload);
+        LakeArea._([], ScrollController(), LakePageStatus.unload);
   }
 
   Future<void> initArea() async {
@@ -72,12 +73,14 @@ class LakeModel extends ChangeNotifier {
   // }
 
   // 列表去重
-  void _addOrUpdateItems(List<EnglishWord> data, int index) {
+  void _addItems(List<EnglishWord> data, int index) {
     for (var element in data) {
       cardAreas[index]
           ?.dataList
-          .update(element.id, (value) => element, ifAbsent: () => element);
+          .add(element);
     }
+    print(cardAreas[index]
+        ?.dataList);
   }
 
   Future<void> getNextCard(int index) async {
@@ -86,7 +89,7 @@ class LakeModel extends ChangeNotifier {
     // print('happybird2');
     cardList.add(DictionaryDataBaseHelper().learnANewWord());
     // print('happybird3');
-    _addOrUpdateItems(cardList, index);
+    _addItems(cardList, index);
     // print('happybird4');
     cardAreas[index]!.currentCard += 1;
     // print('happybird5');
@@ -99,13 +102,45 @@ class LakeModel extends ChangeNotifier {
       cardAreas[index]?.dataList.clear();
     }
     List<EnglishWord> cardList = [];
-    DictionaryDataBaseHelper()
-        .initWordDB()
-        .whenComplete(() => DictionaryDataBaseHelper().initMyselfDB().whenComplete(() {
+    DictionaryDataBaseHelper().initWordDB().whenComplete(() =>
+        DictionaryDataBaseHelper().initMyselfDB().whenComplete(() {
+          Future.delayed(const Duration(milliseconds: 400)).whenComplete(() {
+            cardList.add(DictionaryDataBaseHelper().learnANewWord());
+            Future.delayed(const Duration(milliseconds: 400)).whenComplete(() {
               cardList.add(DictionaryDataBaseHelper().learnANewWord());
-              cardList.add(DictionaryDataBaseHelper().learnANewWord());
-              _addOrUpdateItems(cardList, index);
-              cardAreas[index]!.currentCard = 2;
-            }));
+              Future.delayed(const Duration(milliseconds: 400))
+                  .whenComplete(() {
+                _addItems(cardList, index);
+                cardAreas[index]!.currentCard = 2;
+                notifyListeners();
+              });
+            });
+          });
+        }));
+  }
+
+  learnWordBad(int index, SimpleWord simpleWord) {
+    DictionaryDataBaseHelper().learnWordBad(simpleWord);
+    // cardAreas[index]!.dataList.remove(simpleWord.id);
+    List<EnglishWord> cardList = [DictionaryDataBaseHelper().learnANewWord()];
+    _addItems(cardList, index);
+    cardAreas[index]!.currentCard += 1;
+    cardAreas[index]?.controller.animateTo(
+        cardAreas[index]!.controller.offset + 1.2.sw + 10.w,
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOutCirc);
+    notifyListeners();
+  }
+
+  learnNewWordGood(int index, SimpleWord simpleWord) {
+    DictionaryDataBaseHelper().learnNewWordGood(simpleWord);
+    List<EnglishWord> cardList = [DictionaryDataBaseHelper().learnANewWord()];
+    _addItems(cardList, index);
+    cardAreas[index]!.currentCard += 1;
+    cardAreas[index]?.controller.animateTo(
+        cardAreas[index]!.controller.offset + 1.2.sw + 10.w,
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOutCirc);
+    notifyListeners();
   }
 }

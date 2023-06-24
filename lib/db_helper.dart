@@ -54,15 +54,16 @@ class DictionaryDataBaseHelper {
               word VARCHAR(64) NOT NULL UNIQUE,
               times VARCHAR(16),
               learn VARCHAR(16),
+              learning VARCHAR(16),
               note TEXT
           );
         ''');
       final ResultSet resultSet =
-      _dbUsing.select('SELECT * FROM stardict WHERE tag LIKE \'%ky%\'');
+          _dbUsing.select('SELECT * FROM stardict WHERE tag LIKE \'%ky%\'');
       print(resultSet);
       for (final Row row in resultSet) {
         _dbMyself.execute(
-            'INSERT INTO learn (word, times, learn, note) VALUES (\'${row['word']}\', \'0\', \'0\', \'\')');
+            'INSERT INTO learn (word, times, learn, learning, note) VALUES (\'${row['word']}\', \'0\', \'0\', \'0\', \'\')');
         print(row['word']);
       }
       // }
@@ -112,35 +113,109 @@ class DictionaryDataBaseHelper {
     return defList;
   }
 
-  EnglishWord searchSingleWordFromAll(String tar) {
+  EnglishWord searchSingleWordFromAll(String tar, SimpleWord sw) {
     final ResultSet resultSet = _dbUsing
         .select('SELECT * FROM stardict WHERE word LIKE \'$tar\' LIMIT 1');
 
     EnglishWord def = EnglishWord.fromRow(resultSet.first);
+    def.simpleWord = sw;
     return def;
   }
 
-  EnglishWord learnANewWord() {
+  //////////
+  EnglishWord learnANewWord({bool? forceNew}) {
     SimpleWord wd;
-    while (true) {
-      wd = randomWord();
-      if (wd.times == '0') break;
+    wd = getAWordOfMinIdWithTimesAndLearn('0', '0', '1');
+    print('id: ${wd.id}, times: ${wd.times}, learn: ${wd.learn}, learning: ${wd.learning}');
+    if ((forceNew ?? false) || wd.id == -1) {
+      print("searching");
+      while (true) {
+        wd = randomWord();
+        if (wd.times == '0') break;
+      }
+      wd.times = '1';
+      wd.learn = '0';
+      wd.learning = '1';
+      updateLearningWords(wd);
     }
     wd.times = '1';
-    wd.learn = '0';
-    updateLearningWords(wd);
-    return searchSingleWordFromAll(wd.word);
+    return searchSingleWordFromAll(wd.word, wd);
   }
+
+  learnWordBad(SimpleWord wd) {
+    wd.times = '0';
+    wd.learn = '0';
+    wd.learning = '1';
+    updateLearningWords(wd);
+  }
+
+  learnNewWordGood(SimpleWord wd) {
+    wd.times = '1';
+    wd.learn = '1';
+    updateLearningWords(wd);
+  }
+
+  //////////
+  EnglishWord learnABlindWord() {
+    SimpleWord wd;
+    wd = getAWordOfMinIdWithTimesAndLearn('1', '1', '1');
+    return searchSingleWordFromAll(wd.word, wd);
+  }
+
+  learnBlindWordGood(SimpleWord wd) {
+    wd.times = '1';
+    wd.learn = '2';
+    updateLearningWords(wd);
+  }
+
+  //////////
+  EnglishWord learnASpellWord() {
+    SimpleWord wd;
+    wd = getAWordOfMinIdWithTimesAndLearn('1', '2', '1');
+    return searchSingleWordFromAll(wd.word, wd);
+  }
+
+  learnSpellWordGood(SimpleWord wd) {
+    wd.times = '1';
+    wd.learn = '3';
+    updateLearningWords(wd);
+  }
+
+  //////////
+  EnglishWord learnABlindSpellWord() {
+    SimpleWord wd;
+    wd = getAWordOfMinIdWithTimesAndLearn('1', '3', '1');
+    return searchSingleWordFromAll(wd.word, wd);
+  }
+
+  learnBlindSpellWordGood(SimpleWord wd) {
+    wd.times = '2';
+    wd.learn = '0';
+    wd.learning = '0';
+    updateLearningWords(wd);
+  }
+
+  //////////
 
   updateLearningWords(SimpleWord sw) {
     _dbMyself.select(
         '''UPDATE learn SET word = \'${sw.word}\', times = \'${sw.times}\', 
-        learn = \'${sw.learn}\', note = \'${sw.note}\' WHERE id = \'${sw.id}\'''');
+        learn = \'${sw.learn}\', learning = \'${sw.learning}\', note = \'${sw.note}\' WHERE id = \'${sw.id}\'''');
   }
 
   SimpleWord randomWord() {
-    final ResultSet resultSet = _dbMyself
-        .select('SELECT * FROM learn ORDER BY random() LIMIT 1');
+    final ResultSet resultSet =
+        _dbMyself.select('SELECT * FROM learn ORDER BY random() LIMIT 1');
     return SimpleWord.fromRow(resultSet.first);
+  }
+
+  SimpleWord getAWordOfMinIdWithTimesAndLearn(String times, String learn, String learning) {
+    final ResultSet resultSet = _dbMyself.select(
+        'SELECT * FROM learn WHERE times = \'$times\' AND learn = \'$learn\' AND learning = \'$learning\' LIMIT 1');
+    if (resultSet.isEmpty) {
+      return SimpleWord(id: -1, word: '', times: '', learn: '', note: '', learning: '');
+    } else {
+      return SimpleWord.fromRow(resultSet.first);
+    }
   }
 }

@@ -30,6 +30,7 @@ class EnglishWord {
     required this.bncSeq,
     required this.frqSeq,
     required this.exchange,
+    this.simpleWord,
   });
 
   int id;
@@ -45,6 +46,7 @@ class EnglishWord {
   String bncSeq;
   String frqSeq;
   String exchange;
+  SimpleWord? simpleWord;
 
   factory EnglishWord.fromRawJson(String str) =>
       EnglishWord.fromJson(json.decode(str));
@@ -104,6 +106,7 @@ class SimpleWord {
     required this.word,
     required this.times,
     required this.learn,
+    required this.learning,
     required this.note,
   });
 
@@ -111,6 +114,7 @@ class SimpleWord {
   String word;
   String times;
   String learn;
+  String learning;
   String note;
 
   factory SimpleWord.fromRawJson(String str) =>
@@ -123,6 +127,7 @@ class SimpleWord {
       word: json["word"],
       times: json["times"],
       learn: json["learn"],
+      learning: json["learning"],
       note: json["note"],
   );
 
@@ -131,6 +136,7 @@ class SimpleWord {
       word: row['word'].toString(),
       times: row['times'].toString(),
       learn: row['learn'].toString(),
+      learning: row['learning'].toString(),
       note: row['note'].toString(),
       );
 
@@ -139,6 +145,7 @@ class SimpleWord {
     "word": word,
     "times": times,
     "learn": learn,
+    "learning": learning,
     "note": note,
   };
 }

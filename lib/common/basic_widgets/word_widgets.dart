@@ -181,13 +181,13 @@ class _BasicPhoneticState extends State<BasicPhonetic> {
 }
 
 class WordTag extends StatelessWidget {
-  WordTag(this.src, {Key? key}) : super(key: key);
+  const WordTag(this.src, {Key? key}) : super(key: key);
 
-  String src, tar = '';
+  final String src;
 
   @override
   Widget build(BuildContext context) {
-    tar = src.replaceAll('zk', '中考').replaceAll('gk', '高考').replaceAll('ky', '考研').toUpperCase();
+    String tar = src.replaceAll('zk', '中考').replaceAll('gk', '高考').replaceAll('ky', '考研').toUpperCase();
     return Padding(
       padding: EdgeInsets.only(left: 4.h),
       child: ClipRRect(

@@ -31,35 +31,31 @@ class _MemoCardState extends State<MemoCard> {
   Widget build(BuildContext context) {
     return ClipRRect(
         borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(40.r),
-            topRight: Radius.circular(40.r)),
+            topLeft: Radius.circular(20.r), topRight: Radius.circular(20.r)),
         child: BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-      child: Container(
-        height: 1.sh - MediaQuery.of(context).padding.top - 18.h,
-        width: 1.sw,
-        decoration: const BoxDecoration(
-            color: Colors.black87,
+          filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+          child: Container(
+            height: 1.sh - MediaQuery.of(context).padding.top - 18.h,
+            width: 1.sw,
+            decoration: const BoxDecoration(
+              color: Colors.black87,
             ),
-        child: ListView.builder(
-          controller: context.read<LakeModel>().cardAreas[index]?.controller,
-          // physics: const NeverScrollableScrollPhysics(),
-          itemCount: context.select((LakeModel model) =>
-              model.cardAreas[index]!.dataList.values.toList().length),
-          itemBuilder: (context, ind) {
-            return Builder(builder: (context) {
-              final word = context
-                  .read<LakeModel>()
-                  .cardAreas[index]
-                  ?.dataList
-                  .values
-                  .toList()[ind];
-              return FirstLearnCard(word!);
-            });
-          },
-        ),
-      ),
-    ));
+            child: ListView.builder(
+              controller:
+                  context.read<LakeModel>().cardAreas[index]?.controller,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: context.select(
+                  (LakeModel model) => model.cardAreas[index]!.dataList.length),
+              itemBuilder: (context, ind) {
+                return Builder(builder: (context) {
+                  final word =
+                      context.read<LakeModel>().cardAreas[index]?.dataList[ind];
+                  return FirstLearnCard(word!);
+                });
+              },
+            ),
+          ),
+        ));
   }
 }
 
