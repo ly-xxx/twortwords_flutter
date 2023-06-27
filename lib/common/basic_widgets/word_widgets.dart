@@ -11,11 +11,12 @@ import '../text_util.dart';
 
 class BasicBigWord extends StatefulWidget {
   BasicBigWord(this.word,
-      {this.withPieChart, this.pieChartSrc, this.leftAlign, Key? key})
+      {this.withPieChart, this.pieChartSrc, this.leftAlign, this.width, Key? key})
       : super(key: key);
   String word;
   late bool? withPieChart;
   late String? pieChartSrc;
+  late double? width;
   late bool? leftAlign;
 
   @override
@@ -67,9 +68,9 @@ class _BasicBigWordState extends State<BasicBigWord> {
       children: [
         ConstrainedBox(
             constraints: ((widget.pieChartSrc ?? 'null') != 'null')
-                ? BoxConstraints(maxWidth: 1.sw - 28.h - 3 * radius)
-                : BoxConstraints(maxWidth: 1.sw - 28.h),
-            child: Text(widget.word, style: TextUtil.base.white.w700.sp(40))),
+                ? BoxConstraints(maxWidth: (widget.width ??= 1.sw - 28.h) - 3 * radius)
+                : BoxConstraints(maxWidth: widget.width ??= 1.sw - 28.h),
+            child: Text(widget.word, style: TextUtil.base.white.w700.sp(40), maxLines: 3, overflow: TextOverflow.ellipsis)),
         if (((widget.pieChartSrc ?? 'null') != 'null') &&
             (widget.withPieChart ?? false))
           GestureDetector(
@@ -117,9 +118,11 @@ class _BasicBigWordState extends State<BasicBigWord> {
 }
 
 class BasicPhonetic extends StatefulWidget {
-  BasicPhonetic(this.phonetic, {this.word, Key? key}) : super(key: key);
+  BasicPhonetic(this.phonetic, {this.word, this.read, Key? key}) : super(key: key);
 
   String phonetic;
+
+  bool? read;
 
   late String? word;
 
@@ -134,7 +137,7 @@ class _BasicPhoneticState extends State<BasicPhonetic> {
   void initState() {
     flutterTts = FlutterTts();
     initTts();
-    if (widget.phonetic != 'null' && widget.phonetic != '') {
+    if ((widget.read ?? true) && widget.phonetic != 'null' && widget.phonetic != '') {
       read(widget.word!);
     }
     super.initState();

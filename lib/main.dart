@@ -60,6 +60,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   late bool switchable;
 
+  bool showMemo = false;
+
   late double searPosition, mainPosition, memoPosition;
 
   double panDownY = 0;
@@ -179,6 +181,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                           const Duration(milliseconds: 200),
                                       curve:
                                           Curves.easeInOutCubicEmphasized);
+                                  showMemo = true;
                                   status = 2;
                                   switchable = false;
                                   setState(() {});
@@ -198,15 +201,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               }
                             },
                             onPanEnd: (_) => switchable = true,
-                            child: Container(color: Colors.transparent)),
+                            child: Container(color: Colors.transparent, height: 1.4.sh, width: 1.sw)),
                         FadeAndOffstage(
                           show: status == 0,
                           child: SafeArea(
                             child: SearchCard(fn),
                           ),
                         ),
-                        Align(
-                          alignment: Alignment.bottomCenter,
+                        Offstage(
+                          offstage: !showMemo,
                           child: FadeAndOffstage(
                             show: status == 2,
                             child: const MemoCard(),

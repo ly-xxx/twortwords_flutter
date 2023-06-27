@@ -50,12 +50,14 @@ class _NotSureButtonState extends State<NotSureButton> {
 
 class SureButton extends StatefulWidget {
   const SureButton(
-      this.word, this.accomplished, this.allToAccomplish, this.pattern,
-      {Key? key})
+      this.word, this.accomplished, this.allToAccomplish,
+      {required this.onTap, this.text, Key? key})
       : super(key: key);
 
-  final int accomplished, allToAccomplish, pattern;
+  final int accomplished, allToAccomplish;
   final EnglishWord word;
+  final String? text;
+  final Function(TapUpDetails) onTap;
 
   @override
   State<SureButton> createState() => _SureButtonState();
@@ -84,20 +86,9 @@ class _SureButtonState extends State<SureButton> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        setState(() {
           withAnimate = false;
-        });
-        Future.delayed(const Duration(milliseconds: 600)).whenComplete(() {
-          switch (widget.pattern) {
-            case 0:
-              {
-                context
-                    .read<LakeModel>()
-                    .learnNewWordGood(0, widget.word.simpleWord!);
-              }
-          }
-        });
       },
+      onTapUp: widget.onTap,
       child: Container(
         margin: EdgeInsets.fromLTRB(10.w, 4.w, 10.w, 4.w),
         padding: EdgeInsets.fromLTRB(4.w, 6.w, 4.w, 4.w),
@@ -107,7 +98,7 @@ class _SureButtonState extends State<SureButton> {
             color: Colors.transparent),
         child:
             Column(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          Text('认识', style: TextUtil.base.w600.white.sp(13.8)),
+          Text(widget.text ?? '认识', style: TextUtil.base.w400.white.sp(13.8)),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 18.w),
             child: Row(

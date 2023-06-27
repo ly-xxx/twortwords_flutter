@@ -113,6 +113,14 @@ class SimpleWord {
   int id;
   String word;
   String times;
+
+  /// 0: 可学状态
+  ///
+  /// 1: 已完成初次学习，等待第二次学习
+  ///
+  /// 2: 已完成第二次学习，等待默写
+  ///
+  /// 3: 已完成默写，等待第二次默写
   String learn;
   String learning;
   String note;
@@ -123,29 +131,29 @@ class SimpleWord {
   String toRawJson() => json.encode(toJson());
 
   factory SimpleWord.fromJson(Map<String, dynamic> json) => SimpleWord(
-      id: json["id"],
-      word: json["word"],
-      times: json["times"],
-      learn: json["learn"],
-      learning: json["learning"],
-      note: json["note"],
-  );
+        id: json["id"],
+        word: json["word"],
+        times: json["times"],
+        learn: json["learn"],
+        learning: json["learning"],
+        note: json["note"],
+      );
 
   factory SimpleWord.fromRow(Row row) => SimpleWord(
-      id: row['id'],
-      word: row['word'].toString(),
-      times: row['times'].toString(),
-      learn: row['learn'].toString(),
-      learning: row['learning'].toString(),
-      note: row['note'].toString(),
+        id: row['id'],
+        word: row['word'].toString(),
+        times: row['times'].toString(),
+        learn: row['learn'].toString(),
+        learning: row['learning'].toString(),
+        note: row['note'].toString(),
       );
 
   Map<String, dynamic> toJson() => {
-    "id": id,
-    "word": word,
-    "times": times,
-    "learn": learn,
-    "learning": learning,
-    "note": note,
-  };
+        "id": id,
+        "word": word,
+        "times": times,
+        "learn": learn,
+        "learning": learning,
+        "note": note,
+      };
 }

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class FadeAndOffstage extends StatefulWidget {
 
-  FadeAndOffstage({required this.show, required this.child, this.durMilSec, Key? key})
+  const FadeAndOffstage({required this.show, required this.child, this.durMilSec, Key? key})
       : super(key: key);
 
   final bool show;
 
-  late final int? durMilSec;
+  final int? durMilSec;
 
   final Widget child;
 

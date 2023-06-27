@@ -3,6 +3,8 @@ import 'package:bobwords/db_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'learn_cards.dart';
+
 enum LakePageStatus {
   unload,
   loading,
@@ -11,12 +13,12 @@ enum LakePageStatus {
 }
 
 class LakeArea {
-  final List<EnglishWord> dataList;
+  final List<Widget> widgetList;
   final ScrollController controller;
   late LakePageStatus status;
   int currentCard = 0;
 
-  LakeArea._(this.dataList, this.controller, LakePageStatus unload);
+  LakeArea._(this.widgetList, this.controller, LakePageStatus unload);
 
   factory LakeArea.empty() {
     return LakeArea._([], ScrollController(), LakePageStatus.unload);
@@ -75,12 +77,19 @@ class LakeModel extends ChangeNotifier {
   // 列表去重
   void _addItems(List<EnglishWord> data, int index) {
     for (var element in data) {
-      cardAreas[index]
-          ?.dataList
-          .add(element);
+      switch (element.simpleWord?.learn) {
+        case '0':
+          cardAreas[index]?.widgetList.add(FirstLearnCard(element));
+        case '1':
+          cardAreas[index]?.widgetList.add(FirstLearnRw1Card(element));
+        case '2':
+          cardAreas[index]?.widgetList.add(FirstLearnSpell1Card(element));
+        case '3':
+          cardAreas[index]?.widgetList.add(FirstLearnSpell2Card(element));
+        default:
+          return cardAreas[index]?.widgetList.add(const SpaceCard());
+      }
     }
-    print(cardAreas[index]
-        ?.dataList);
   }
 
   Future<void> getNextCard(int index) async {
@@ -98,8 +107,8 @@ class LakeModel extends ChangeNotifier {
 
   Future<void> initCardList(int index) async {
     tabControllerLoaded = true;
-    if (cardAreas[index]?.dataList != null) {
-      cardAreas[index]?.dataList.clear();
+    if (cardAreas[index]?.widgetList != null) {
+      cardAreas[index]?.widgetList.clear();
     }
     List<EnglishWord> cardList = [];
     DictionaryDataBaseHelper().initWordDB().whenComplete(() =>
@@ -107,16 +116,20 @@ class LakeModel extends ChangeNotifier {
           Future.delayed(const Duration(milliseconds: 400)).whenComplete(() {
             cardList.add(DictionaryDataBaseHelper().learnANewWord());
             Future.delayed(const Duration(milliseconds: 400)).whenComplete(() {
-              cardList.add(DictionaryDataBaseHelper().learnANewWord());
-              Future.delayed(const Duration(milliseconds: 400))
-                  .whenComplete(() {
-                _addItems(cardList, index);
-                cardAreas[index]!.currentCard = 2;
-                notifyListeners();
-              });
+              _addItems(cardList, index);
+              cardAreas[index]!.currentCard = 2;
+              notifyListeners();
             });
           });
         }));
+  }
+
+  nextCard(int index) {
+    cardAreas[index]!.currentCard += 1;
+    cardAreas[index]?.controller.animateTo(
+        cardAreas[index]!.controller.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOutCirc);
   }
 
   learnWordBad(int index, SimpleWord simpleWord) {
@@ -124,23 +137,76 @@ class LakeModel extends ChangeNotifier {
     // cardAreas[index]!.dataList.remove(simpleWord.id);
     List<EnglishWord> cardList = [DictionaryDataBaseHelper().learnANewWord()];
     _addItems(cardList, index);
-    cardAreas[index]!.currentCard += 1;
-    cardAreas[index]?.controller.animateTo(
-        cardAreas[index]!.controller.offset + 1.2.sw + 10.w,
-        duration: const Duration(milliseconds: 800),
-        curve: Curves.easeInOutCirc);
+    nextCard(index);
     notifyListeners();
   }
 
-  learnNewWordGood(int index, SimpleWord simpleWord) {
-    DictionaryDataBaseHelper().learnNewWordGood(simpleWord);
+  learnNewWordGood(int index, {SimpleWord? simpleWord}) {
+    List<SimpleWord> sl = DictionaryDataBaseHelper()
+        .getLimitedLastWordsLearningFilteredWith(
+            times: '1', learn: '1', limit: '4');
+    if (simpleWord != null) {
+      DictionaryDataBaseHelper().learnNewWordGood(simpleWord);
+    }
+    if (sl.isEmpty) {
+      List<EnglishWord> cardList = [DictionaryDataBaseHelper().learnANewWord()];
+      _addItems(cardList, index);
+    } else {
+      List<EnglishWord> cardList = [
+        // 省一次查询
+        DictionaryDataBaseHelper().learnABlindWord(wd: sl.first)
+      ];
+      _addItems(cardList, index);
+    }
+    nextCard(index);
+    notifyListeners();
+  }
+
+  learnBlindWordGood(int index, {SimpleWord? simpleWord}) {
+    List<SimpleWord> sl = DictionaryDataBaseHelper()
+        .getLimitedLastWordsLearningFilteredWith(
+            times: '1', learn: '2', limit: '4');
+    if (simpleWord != null) {
+      DictionaryDataBaseHelper().learnBlindWordGood(simpleWord);
+    }
+    if (sl.isEmpty) {
+      learnNewWordGood(index);
+    } else {
+      List<EnglishWord> cardList = [
+        DictionaryDataBaseHelper().learnASpellWord(wd: sl.first)
+      ];
+      _addItems(cardList, index);
+    }
+    nextCard(index);
+    notifyListeners();
+  }
+
+  learnSpellWordGood(int index, {SimpleWord? simpleWord}) {
+    List<SimpleWord> sl = DictionaryDataBaseHelper()
+        .getLimitedLastWordsLearningFilteredWith(
+            times: '1', learn: '3', limit: '4');
+    if (simpleWord != null) {
+      DictionaryDataBaseHelper().learnSpellWordGood(simpleWord);
+    }
+    if (sl.isEmpty) {
+      learnBlindWordGood(index);
+    } else {
+      List<EnglishWord> cardList = [
+        DictionaryDataBaseHelper().learnABlindSpellWord(wd: sl.first)
+      ];
+      _addItems(cardList, index);
+    }
+    nextCard(index);
+    notifyListeners();
+  }
+
+  learnBlindSpellWordGood(int index, {SimpleWord? simpleWord}) {
+    if (simpleWord != null) {
+      DictionaryDataBaseHelper().learnSpellWordGood(simpleWord);
+    }
     List<EnglishWord> cardList = [DictionaryDataBaseHelper().learnANewWord()];
     _addItems(cardList, index);
-    cardAreas[index]!.currentCard += 1;
-    cardAreas[index]?.controller.animateTo(
-        cardAreas[index]!.controller.offset + 1.2.sw + 10.w,
-        duration: const Duration(milliseconds: 800),
-        curve: Curves.easeInOutCirc);
+    nextCard(index);
     notifyListeners();
   }
 }
