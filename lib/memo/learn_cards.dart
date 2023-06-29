@@ -1,8 +1,6 @@
 import 'package:bobwords/common/basic_widgets/buttons.dart';
 import 'package:bobwords/common/basic_widgets/word_widgets.dart';
-import 'package:bobwords/common/fade_and_offstage.dart';
 import 'package:bobwords/common/model/english_word.dart';
-import 'package:bobwords/common/word_details.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +20,7 @@ class FirstLearnCard extends StatefulWidget {
 
 class _FirstLearnCardState extends State<FirstLearnCard> {
   bool showDef = false;
+  bool badState = false;
 
   @override
   Widget build(BuildContext context) {
@@ -45,18 +44,32 @@ class _FirstLearnCardState extends State<FirstLearnCard> {
           if (showDef) Expanded(child: WordStatus(widget.word)),
           Row(children: [
             Expanded(
-                child: SureButton(onTap: (_) {
+                child:
+                    NotSureButton(widget.word, badState ? -2 : -1, onTap: () {
               if (showDef == false) {
                 setState(() {
                   showDef = true;
+                  badState = true;
                 });
               } else {
                 context
                     .read<LakeModel>()
-                    .learnNewWordGood(0, simpleWord: widget.word.simpleWord!);
+                    .learnWordBad(0, widget.word.simpleWord!);
               }
-            }, widget.word, 0, 4)),
-            Expanded(child: NotSureButton(widget.word, -1))
+            })),
+            if (!badState)
+              Expanded(
+                  child: SureButton(onTap: (_) {
+                if (showDef == false) {
+                  setState(() {
+                    showDef = true;
+                  });
+                } else {
+                  context
+                      .read<LakeModel>()
+                      .learnNewWordGood(0, simpleWord: widget.word.simpleWord!);
+                }
+              }, widget.word, 0, 4))
           ])
         ],
       ),
@@ -75,6 +88,7 @@ class FirstLearnRw1Card extends StatefulWidget {
 
 class _FirstLearnRw1CardState extends State<FirstLearnRw1Card> {
   bool showDef = false;
+  bool badState = false;
 
   @override
   Widget build(BuildContext context) {
@@ -98,18 +112,31 @@ class _FirstLearnRw1CardState extends State<FirstLearnRw1Card> {
           if (showDef) Expanded(child: WordStatus(widget.word)),
           Row(children: [
             Expanded(
-                child: SureButton(onTap: (_) {
+                child:
+                    NotSureButton(widget.word, badState ? -2 : -1, onTap: () {
               if (showDef == false) {
                 setState(() {
                   showDef = true;
+                  badState = true;
                 });
               } else {
                 context
                     .read<LakeModel>()
-                    .learnBlindWordGood(0, simpleWord: widget.word.simpleWord!);
+                    .learnWordBad(0, widget.word.simpleWord!);
               }
-            }, widget.word, 1, 4)),
-            Expanded(child: NotSureButton(widget.word, -1))
+            })),
+            if (!badState)
+              Expanded(
+                  child: SureButton(onTap: (_) {
+                if (showDef == false) {
+                  setState(() {
+                    showDef = true;
+                  });
+                } else {
+                  context.read<LakeModel>().learnBlindWordGood(0,
+                      simpleWord: widget.word.simpleWord!);
+                }
+              }, widget.word, 1, 4))
           ])
         ],
       ),
@@ -137,17 +164,10 @@ class _FirstLearnSpell1CardState extends State<FirstLearnSpell1Card> {
       decoration: BoxDecoration(
           color: Colors.white10,
           borderRadius: BorderRadius.all(Radius.circular(10.r))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: BeautifulKeyboard(
-              width: 1.sw - 20.w,
-              correctAnswer: widget.word,
-              showHint: true,
-            ),
-          ),
-        ],
+      child: SpellingCardWithKeyboard(
+        width: 1.sw - 20.w,
+        correctAnswer: widget.word,
+        showHint: true,
       ),
     );
   }
@@ -173,26 +193,10 @@ class _FirstLearnSpell2CardState extends State<FirstLearnSpell2Card> {
       decoration: BoxDecoration(
           color: Colors.white10,
           borderRadius: BorderRadius.all(Radius.circular(10.r))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          BasicBigWord(widget.word.word, leftAlign: true),
-          BasicPhonetic(widget.word.phonetic, word: widget.word.word),
-          const Spacer(),
-          Row(children: [
-            Expanded(
-                child: SureButton(
-              widget.word,
-              3,
-              4,
-              onTap: (_) {
-                context.read<LakeModel>().learnBlindSpellWordGood(0,
-                    simpleWord: widget.word.simpleWord!);
-              },
-            )),
-            Expanded(child: NotSureButton(widget.word, -1))
-          ])
-        ],
+      child: SpellingCardWithKeyboard(
+        width: 1.sw - 20.w,
+        correctAnswer: widget.word,
+        showHint: false,
       ),
     );
   }

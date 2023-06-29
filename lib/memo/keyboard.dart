@@ -1,18 +1,19 @@
 import 'package:bobwords/common/basic_widgets/word_widgets.dart';
-import 'package:bobwords/common/fade_and_offstage.dart';
 import 'package:bobwords/common/text_util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'dart:math';
 
 import '../common/basic_widgets/buttons.dart';
 import '../common/model/english_word.dart';
+import '../common/word_details.dart';
 import '../db_helper.dart';
 import 'lake_notifier.dart';
 
-class BeautifulKeyboard extends StatefulWidget {
-  const BeautifulKeyboard(
+class SpellingCardWithKeyboard extends StatefulWidget {
+  const SpellingCardWithKeyboard(
       {required this.width,
       required this.correctAnswer,
       Key? key,
@@ -24,10 +25,12 @@ class BeautifulKeyboard extends StatefulWidget {
   final EnglishWord correctAnswer;
 
   @override
-  State<BeautifulKeyboard> createState() => _BeautifulKeyboardState();
+  State<SpellingCardWithKeyboard> createState() =>
+      _SpellingCardWithKeyboardState();
 }
 
-class _BeautifulKeyboardState extends State<BeautifulKeyboard> {
+class _SpellingCardWithKeyboardState extends State<SpellingCardWithKeyboard> {
+  late int status = widget.showHint ? 1 : 0;
   final double _horizontalPadding = 10.w;
   late double _singleElementWidth;
   String text = '';
@@ -107,14 +110,14 @@ class _BeautifulKeyboardState extends State<BeautifulKeyboard> {
         text += ele;
       }
       RegExp regExp = RegExp('[^a-zA-Z]');
-      String swText = text.replaceAllMapped(regExp, (_) => '');
+      String swText = text.replaceAllMapped(regExp, (_) => '').toLowerCase();
       List<String> firstAlphas = [];
       if (swText == widget.correctAnswer.sw) {
         paired = true;
       } else {
         paired = false;
       }
-      if (swText != '') {
+      if (status != 0 && swText != '') {
         wordList =
             DictionaryDataBaseHelper().searchAll(swText, 0, pageSize: 100);
         if (wordList.isNotEmpty) {
@@ -132,8 +135,7 @@ class _BeautifulKeyboardState extends State<BeautifulKeyboard> {
             }
           }
         }
-        similarity = levenshtein(minLengthWord.sw, widget.correctAnswer.sw);
-        print(similarity);
+        similarity = levenshtein(swText, widget.correctAnswer.sw);
         if (firstAlphas.isNotEmpty) {
           available.updateAll(
               (key, value) => firstAlphas.contains(key) ? true : false);
@@ -162,185 +164,243 @@ class _BeautifulKeyboardState extends State<BeautifulKeyboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: widget.width * 0.2),
-        BasicBigWord(text),
+        SizedBox(height: 6.h),
+        if (status == 2)
+          Text('请根据提示拼写:', style: TextUtil.base.w400.white.sp(13)),
+        SizedBox(height: widget.width * 0.18),
+        Center(
+          child: Text(text,
+              style: finished
+                  ? TextUtil.base.greenCorrect.w700.sp(40)
+                  : TextUtil.base.white.w700.sp(40),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis),
+        ),
         Container(
             margin: EdgeInsets.only(right: _horizontalPadding, bottom: 12.h),
-            color: Colors.white70,
+            color: finished ? Colors.white10 : Colors.white70,
             height: 1),
         Center(
           child: Text(widget.correctAnswer.translation,
               style: TextUtil.base.w400.white.sp(13), maxLines: 3),
         ),
         SizedBox(height: 8.h),
-        GestureDetector(
-          onTap: () => setState(() => showPhonetic = !showPhonetic),
-          child: Row(
-            children: [
-              const Spacer(),
-              Container(
-                height: 26.h,
-                padding: EdgeInsets.symmetric(horizontal: 10.w),
-                decoration: BoxDecoration(
-                    color: Colors.black38,
-                    borderRadius: BorderRadius.all(Radius.circular(10.r))),
-                child: Row(
-                  children: [
-                    const Text('✋'),
-                    if (showPhonetic)
-                      BasicPhonetic(widget.correctAnswer.phonetic,
-                          word: widget.correctAnswer.word),
-                  ],
-                ),
-              ),
-              const Spacer(),
-            ],
-          ),
-        ),
-        const Spacer(flex: 3),
-        SizedBox(height: 6.w),
-        Container(
-          margin: EdgeInsets.only(right: 8.w),
-          height: 50.h,
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(10.r))),
-          child: Stack(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: similarity >= widget.correctAnswer.sw.length / 2
-                    ? ((widget.width - 2 * _horizontalPadding) /
-                        (similarity + 1))
-                    : ((widget.width - 2 * _horizontalPadding) *
-                        (widget.correctAnswer.sw.length / 2 - similarity) /
-                        widget.correctAnswer.sw.length *
-                        2),
-                height: 50.h,
-                decoration: BoxDecoration(
-                    color: minLengthWord.word.isEmpty
-                        ? Colors.transparent
-                        : paired
-                            ? Colors.green.withOpacity(0.2)
-                            : Colors.amber.withOpacity(0.1),
-                    borderRadius: BorderRadius.all(Radius.circular(10.r))),
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                        maxWidth:
-                            (widget.width - 2 * _horizontalPadding) * 0.4),
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 8.w),
-                      child: Text(minLengthWord.word,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                          style: TextUtil.base.white.w600.sp(14)),
-                    )),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                      maxWidth: (widget.width - 2 * _horizontalPadding) * 0.6),
-                  child: Padding(
-                    padding: EdgeInsets.only(right: 8.w),
-                    child: Text(minLengthWord.translation,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 3,
-                        style: TextUtil.base.white.w300.sp(11)),
+        if (status != 0)
+          GestureDetector(
+            onTap: () {
+              setState(() => showPhonetic = !showPhonetic);
+              Future.delayed(const Duration(milliseconds: 2000))
+                  .whenComplete(() => setState(() => showPhonetic = false));
+            },
+            child: Row(
+              children: [
+                const Spacer(),
+                Container(
+                  height: 26.h,
+                  decoration: BoxDecoration(
+                      color: Colors.black38,
+                      borderRadius: BorderRadius.all(Radius.circular(10.r))),
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    child: Row(
+                      children: [
+                        Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4.w),
+                            child: SvgPicture.asset('assets/svg/sound.svg',
+                                width: 20.h, fit: BoxFit.fitWidth)),
+                        if (showPhonetic || finished)
+                          BasicPhonetic(widget.correctAnswer.phonetic,
+                              word: widget.correctAnswer.word),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: _horizontalPadding)
-            ],
+                const Spacer(),
+              ],
+            ),
           ),
-        ),
+        const Spacer(flex: 3),
+        SizedBox(height: 6.w),
+        if (status != 0)
+          InkWell(
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => WordDetails(minLengthWord))),
+            child: Container(
+              margin: EdgeInsets.only(right: 8.w),
+              height: 50.h,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(10.r))),
+              child: Stack(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 400),
+                    width: similarity >= widget.correctAnswer.sw.length / 2
+                        ? ((widget.width - 2 * _horizontalPadding) /
+                            (similarity + 1))
+                        : ((widget.width - 2 * _horizontalPadding) *
+                            (widget.correctAnswer.sw.length / 2 - similarity) /
+                            widget.correctAnswer.sw.length *
+                            2),
+                    height: 50.h,
+                    decoration: BoxDecoration(
+                        color: minLengthWord.word.isEmpty || finished
+                            ? Colors.transparent
+                            : paired
+                                ? Colors.green.withOpacity(0.2)
+                                : Colors.amber.withOpacity(0.1),
+                        borderRadius: BorderRadius.all(Radius.circular(10.r))),
+                  ),
+                  if (!finished)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                              maxWidth:
+                                  (widget.width - 2 * _horizontalPadding) *
+                                      0.4),
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8.w),
+                            child: Text(minLengthWord.word,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                                style: TextUtil.base.white.w600.sp(14)),
+                          )),
+                    ),
+                  if (!finished)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                            maxWidth:
+                                (widget.width - 2 * _horizontalPadding) * 0.6),
+                        child: Padding(
+                          padding: EdgeInsets.only(right: 8.w),
+                          child: Text(minLengthWord.translation,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 3,
+                              style: TextUtil.base.white.w300.sp(11)),
+                        ),
+                      ),
+                    ),
+                  SizedBox(width: _horizontalPadding)
+                ],
+              ),
+            ),
+          ),
         SizedBox(height: 12.w),
-        Row(
-          children: List.generate(
-              10,
-              (index) => SizedBox(
-                    width: _singleElementWidth,
-                    height: _singleElementWidth * 1.3,
-                    child: KeyboardElement(
-                        rw1[index], available[rw1[index]] ?? false,
-                        onTap: onTapEle(rw1[index])),
-                  )),
-        ),
-        Padding(
-          padding: EdgeInsets.only(left: 0.4 * _singleElementWidth),
-          child: Row(
+        if (!finished)
+          Row(
             children: List.generate(
-                9,
+                10,
                 (index) => SizedBox(
                       width: _singleElementWidth,
                       height: _singleElementWidth * 1.3,
                       child: KeyboardElement(
-                          rw2[index], available[rw2[index]] ?? false,
-                          onTap: onTapEle(rw2[index])),
+                          rw1[index], available[rw1[index]] ?? false,
+                          onTap: onTapEle(rw1[index])),
                     )),
           ),
-        ),
-        Row(
-          children: [
-            SizedBox(
-                width: _singleElementWidth * 0.8,
-                height: _singleElementWidth * 1.3,
-                child: KeyboardElement('↑', false, onTap: () {})),
-            ...List.generate(
-                7,
-                (index) => SizedBox(
-                      width: _singleElementWidth,
-                      height: _singleElementWidth * 1.3,
-                      child: GestureDetector(
-                        onTap: onTapEle(rw3[index]),
+        if (!finished)
+          Padding(
+            padding: EdgeInsets.only(left: 0.4 * _singleElementWidth),
+            child: Row(
+              children: List.generate(
+                  9,
+                  (index) => SizedBox(
+                        width: _singleElementWidth,
+                        height: _singleElementWidth * 1.3,
                         child: KeyboardElement(
-                            rw3[index], available[rw3[index]] ?? false,
-                            onTap: onTapEle(rw3[index])),
-                      ),
-                    )),
-            SizedBox(
-                width: _singleElementWidth * 2.2,
-                height: _singleElementWidth * 1.3,
-                child: KeyboardElement('←', true,
-                    onTap: onTapEle('←'), onLongTap: deleteAll()))
-          ],
-        ),
-        Row(
-          children: [
-            SizedBox(
-                width: _singleElementWidth * 1.2,
-                height: _singleElementWidth,
-                child: KeyboardElement(' ', false, onTap: () {})),
-            SizedBox(
-                width: _singleElementWidth * 7.6,
-                height: _singleElementWidth,
-                child: KeyboardElement('space', true, onTap: onTapEle(' '))),
-            SizedBox(
-                width: _singleElementWidth * 1.2,
-                height: _singleElementWidth,
-                child: KeyboardElement(' ', false, onTap: () {})),
-          ],
-        ),
+                            rw2[index], available[rw2[index]] ?? false,
+                            onTap: onTapEle(rw2[index])),
+                      )),
+            ),
+          ),
+        if (!finished)
+          Row(
+            children: [
+              SizedBox(
+                  width: _singleElementWidth * 0.8,
+                  height: _singleElementWidth * 1.3,
+                  child: KeyboardElement('↑', false, onTap: () {})),
+              ...List.generate(
+                  7,
+                  (index) => SizedBox(
+                        width: _singleElementWidth,
+                        height: _singleElementWidth * 1.3,
+                        child: GestureDetector(
+                          onTap: onTapEle(rw3[index]),
+                          child: KeyboardElement(
+                              rw3[index], available[rw3[index]] ?? false,
+                              onTap: onTapEle(rw3[index])),
+                        ),
+                      )),
+              SizedBox(
+                  width: _singleElementWidth * 2.2,
+                  height: _singleElementWidth * 1.3,
+                  child: KeyboardElement('←', true,
+                      onTap: onTapEle('←'), onLongTap: deleteAll()))
+            ],
+          ),
+        if (!finished)
+          Row(
+            children: [
+              SizedBox(
+                  width: _singleElementWidth * 1.2,
+                  height: _singleElementWidth,
+                  child: KeyboardElement(' ', false, onTap: () {})),
+              SizedBox(
+                  width: _singleElementWidth * 7.6,
+                  height: _singleElementWidth,
+                  child: KeyboardElement('space', true, onTap: onTapEle(' '))),
+              SizedBox(
+                  width: _singleElementWidth * 1.2,
+                  height: _singleElementWidth,
+                  child: KeyboardElement(' ', false, onTap: () {})),
+            ],
+          ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            if (!paired)
+            if (!(paired || status == 0))
               Expanded(child: NotSureButton(widget.correctAnswer, 0)),
-            Expanded(child: NotSureButton(widget.correctAnswer, -1)),
-            if (paired)
+            if (status == 0)
+              Expanded(
+                  child: NotSureButton(widget.correctAnswer, -1, onTap: () {
+                setState(() {
+                  status = 2;
+                });
+              })),
+            if (status != 0)
+              Expanded(
+                  child: paired ? const SizedBox() : NotSureButton(widget.correctAnswer, -1)),
+            if (paired || status == 0)
               Expanded(
                   child: SureButton(onTap: (_) {
-                if (finished == false) {
+                if (!paired) {
+                  setState(() {
+                    status = 2;
+                  });
+                } else if (finished == false) {
                   setState(() {
                     finished = true;
                   });
                 } else {
-                  context.read<LakeModel>().learnSpellWordGood(0,
-                      simpleWord: widget.correctAnswer.simpleWord!);
+                  status == 1
+                      ? context.read<LakeModel>().learnSpellWordGood(0,
+                          simpleWord: widget.correctAnswer.simpleWord!)
+                      : status == 2
+                          ? context.read<LakeModel>().learnSpellWordBad(
+                              0, widget.correctAnswer.simpleWord!)
+                          : context.read<LakeModel>().learnBlindSpellWordGood(0,
+                              simpleWord: widget.correctAnswer.simpleWord!);
                 }
-              }, widget.correctAnswer, 2, 4, text: '继续')),
+              }, widget.correctAnswer, status == 0 ? 3 : 2, 4,
+                      text: status == 0
+                          ? finished ? '继续' : '校验'
+                          : status == 1
+                              ? '继续'
+                              : '这下记住了')),
           ],
         )
       ],

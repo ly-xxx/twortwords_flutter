@@ -90,7 +90,7 @@ extension TextStyleAttr on TextStyle {
 
   TextStyle get black2A => copyWith(color: const Color(0xFF2A2A2A));
 
-  TextStyle get green1B => copyWith(color: const Color(0xFF1B7457));
+  TextStyle get greenCorrect => copyWith(color: const Color(0xFF1D624B));
 
   TextStyle get green5C => copyWith(color: const Color(0xFF5CB85C));
 

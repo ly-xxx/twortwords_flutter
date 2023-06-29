@@ -55,6 +55,7 @@ class DictionaryDataBaseHelper {
               times VARCHAR(16),
               learn VARCHAR(16),
               learning VARCHAR(16),
+              last TIMESTAMP,
               note TEXT
           );
         ''');
@@ -99,16 +100,14 @@ class DictionaryDataBaseHelper {
     return defList;
   }
 
-  List<EnglishWord> searchMyself(String tar, int offset) {
-    List<EnglishWord> defList = [];
+  List<SimpleWord> searchMyself(String tar, int offset) {
+    List<SimpleWord> defList = [];
     final ResultSet resultSet = _dbMyself.select(
         'SELECT * FROM learn WHERE word LIKE \'$tar%\' LIMIT 50 OFFSET $offset');
 
     for (final Row defRow in resultSet) {
-      EnglishWord def = EnglishWord.fromRow(defRow);
-      if (def.translation.isNotEmpty) {
-        defList.add(def);
-      }
+      SimpleWord def = SimpleWord.fromRow(defRow);
+      defList.add(def);
     }
     return defList;
   }
@@ -124,11 +123,13 @@ class DictionaryDataBaseHelper {
 
   //////////
   EnglishWord learnANewWord({bool? forceNew}) {
+    List<SimpleWord> wdList;
     SimpleWord wd;
-    wd = getAWordOfMinIdWithTimesAndLearn('0', '0', '1');
-    print(
-        'id: ${wd.id}, times: ${wd.times}, learn: ${wd.learn}, learning: ${wd.learning}');
-    if ((forceNew ?? false) || wd.id == -1) {
+    wdList = getLimitedLastWordsLearningFilteredWith(
+        limit: '4', times: '0', learn: '0');
+    if (wdList.isNotEmpty) {
+      wd = wdList.first;
+    } else {
       print("searching");
       while (true) {
         wd = randomWord();
@@ -140,12 +141,31 @@ class DictionaryDataBaseHelper {
       updateLearningWords(wd);
     }
     wd.times = '1';
+    printLearningStatus();
     return searchSingleWordFromAll(wd.word, wd);
+  }
+
+  printLearningStatus() {
+    final ResultSet resultSet =
+        _dbMyself.select('SELECT * FROM learn WHERE learning = \'1\' ORDER BY learn');
+
+    for (final Row defRow in resultSet) {
+      SimpleWord wd = SimpleWord.fromRow(defRow);
+      print(
+          'times: ${wd.times}, learn: ${wd.learn}, learning: ${wd.learning}, id: ${wd.id}, word: ${wd.word}');
+    }
   }
 
   learnWordBad(SimpleWord wd) {
     wd.times = '0';
     wd.learn = '0';
+    wd.learning = '1';
+    updateLearningWords(wd);
+  }
+
+  learnSpellWordBad(SimpleWord wd) {
+    wd.times = '1';
+    wd.learn = '2';
     wd.learning = '1';
     updateLearningWords(wd);
   }
@@ -198,7 +218,7 @@ class DictionaryDataBaseHelper {
   updateLearningWords(SimpleWord sw) {
     _dbMyself.select(
         '''UPDATE learn SET word = \'${sw.word}\', times = \'${sw.times}\', 
-        learn = \'${sw.learn}\', learning = \'${sw.learning}\', note = \'${sw.note}\' WHERE id = \'${sw.id}\'''');
+        learn = \'${sw.learn}\', learning = \'${sw.learning}\', last = \'${DateTime.timestamp()}\', note = \'${sw.note}\' WHERE id = \'${sw.id}\'''');
   }
 
   SimpleWord randomWord() {
@@ -210,7 +230,7 @@ class DictionaryDataBaseHelper {
   SimpleWord getAWordOfMinIdWithTimesAndLearn(
       String times, String learn, String learning) {
     final ResultSet resultSet = _dbMyself.select(
-        'SELECT * FROM learn WHERE times = \'$times\' AND learn = \'$learn\' AND learning = \'$learning\' ORDER BY id DESC LIMIT 1');
+        'SELECT * FROM learn WHERE times = \'$times\' AND learn = \'$learn\' AND learning = \'$learning\' ORDER BY last LIMIT 1');
     if (resultSet.isEmpty) {
       return SimpleWord(
           id: -1, word: '', times: '', learn: '', note: '', learning: '');
@@ -223,7 +243,7 @@ class DictionaryDataBaseHelper {
       {required String limit, required String times, required String learn}) {
     List<SimpleWord> sl = [];
     final ResultSet resultSet = _dbMyself.select(
-        'SELECT * FROM learn WHERE times = \'$times\' AND learn = \'$learn\' AND learning = \'1\' ORDER BY id DESC LIMIT $limit');
+        'SELECT * FROM learn WHERE times = \'$times\' AND learn = \'$learn\' AND learning = \'1\' ORDER BY last LIMIT $limit');
     for (final Row defRow in resultSet) {
       SimpleWord def = SimpleWord.fromRow(defRow);
       sl.add(def);

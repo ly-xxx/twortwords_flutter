@@ -8,11 +8,13 @@ import '../../db_helper.dart';
 import '../../memo/lake_notifier.dart';
 
 class NotSureButton extends StatefulWidget {
-  const NotSureButton(this.word, this.usage, {Key? key}) : super(key: key);
+  const NotSureButton(this.word, this.usage, {this.onTap, Key? key})
+      : super(key: key);
 
   /// -1 忘记了 0 模糊
   final int usage;
   final EnglishWord word;
+  final Function()? onTap;
 
   @override
   State<NotSureButton> createState() => _NotSureButtonState();
@@ -22,9 +24,10 @@ class _NotSureButtonState extends State<NotSureButton> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        context.read<LakeModel>().learnWordBad(0, widget.word.simpleWord!);
-      },
+      onTap: widget.onTap ??
+          () {
+            context.read<LakeModel>().learnWordBad(0, widget.word.simpleWord!);
+          },
       child: Container(
         margin: EdgeInsets.fromLTRB(10.w, 4.w, 10.w, 4.w),
         padding: EdgeInsets.fromLTRB(4.w, 6.w, 4.w, 4.w),
@@ -33,14 +36,22 @@ class _NotSureButtonState extends State<NotSureButton> {
             borderRadius: BorderRadius.all(Radius.circular(10.r))),
         child:
             Column(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          Text(widget.usage == -1 ? '忘记了' : '模糊',
+          Text(
+              widget.usage == -2
+                  ? '继续'
+                  : widget.usage == -1
+                      ? '忘记了'
+                      : '模糊',
               style: TextUtil.base.w400.white.sp(14)),
           Container(
               height: 4.w,
               margin: EdgeInsets.symmetric(horizontal: 20.w),
               decoration: BoxDecoration(
-                  color:
-                      widget.usage == -1 ? Colors.red[900] : Colors.amber[800],
+                  color: widget.usage == -2
+                      ? Colors.greenAccent.withOpacity(0.5)
+                      : widget.usage == -1
+                          ? Colors.red[900]
+                          : Colors.amber[800],
                   borderRadius: BorderRadius.all(Radius.circular(3.w))))
         ]),
       ),
@@ -49,8 +60,7 @@ class _NotSureButtonState extends State<NotSureButton> {
 }
 
 class SureButton extends StatefulWidget {
-  const SureButton(
-      this.word, this.accomplished, this.allToAccomplish,
+  const SureButton(this.word, this.accomplished, this.allToAccomplish,
       {required this.onTap, this.text, Key? key})
       : super(key: key);
 
@@ -147,7 +157,7 @@ class _FlashingIndicatorState extends State<FlashingIndicator> {
       height: 4.w,
       margin: EdgeInsets.symmetric(horizontal: 2.w),
       decoration: BoxDecoration(
-          color: on ? Colors.greenAccent[700] : Colors.transparent,
+          color: on ? Colors.green[500] : Colors.transparent,
           border: Border.all(
               color: on ? Colors.greenAccent[700]! : Colors.green[800]!),
           borderRadius: BorderRadius.all(Radius.circular(3.w))),

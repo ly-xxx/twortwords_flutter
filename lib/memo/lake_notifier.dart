@@ -141,6 +141,15 @@ class LakeModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  learnSpellWordBad(int index, SimpleWord simpleWord) {
+    DictionaryDataBaseHelper().learnSpellWordBad(simpleWord);
+    // cardAreas[index]!.dataList.remove(simpleWord.id);
+    List<EnglishWord> cardList = [DictionaryDataBaseHelper().learnASpellWord()];
+    _addItems(cardList, index);
+    nextCard(index);
+    notifyListeners();
+  }
+
   learnNewWordGood(int index, {SimpleWord? simpleWord}) {
     List<SimpleWord> sl = DictionaryDataBaseHelper()
         .getLimitedLastWordsLearningFilteredWith(
@@ -202,7 +211,7 @@ class LakeModel extends ChangeNotifier {
 
   learnBlindSpellWordGood(int index, {SimpleWord? simpleWord}) {
     if (simpleWord != null) {
-      DictionaryDataBaseHelper().learnSpellWordGood(simpleWord);
+      DictionaryDataBaseHelper().learnBlindSpellWordGood(simpleWord);
     }
     List<EnglishWord> cardList = [DictionaryDataBaseHelper().learnANewWord()];
     _addItems(cardList, index);

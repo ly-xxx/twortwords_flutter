@@ -10,14 +10,13 @@ import 'package:flutter_tts/flutter_tts.dart';
 import '../text_util.dart';
 
 class BasicBigWord extends StatefulWidget {
-  BasicBigWord(this.word,
-      {this.withPieChart, this.pieChartSrc, this.leftAlign, this.width, Key? key})
+  const BasicBigWord(this.word,
+      {this.withPieChart, this.pieChartSrc, this.leftAlign, Key? key})
       : super(key: key);
-  String word;
-  late bool? withPieChart;
-  late String? pieChartSrc;
-  late double? width;
-  late bool? leftAlign;
+  final String word;
+  final bool? withPieChart;
+  final String? pieChartSrc;
+  final bool? leftAlign;
 
   @override
   State<BasicBigWord> createState() => _BasicBigWordState();
@@ -68,8 +67,8 @@ class _BasicBigWordState extends State<BasicBigWord> {
       children: [
         ConstrainedBox(
             constraints: ((widget.pieChartSrc ?? 'null') != 'null')
-                ? BoxConstraints(maxWidth: (widget.width ??= 1.sw - 28.h) - 3 * radius)
-                : BoxConstraints(maxWidth: widget.width ??= 1.sw - 28.h),
+                ? BoxConstraints(maxWidth: (1.sw - 28.h) - 3 * radius)
+                : BoxConstraints(maxWidth: 1.sw - 28.h),
             child: Text(widget.word, style: TextUtil.base.white.w700.sp(40), maxLines: 3, overflow: TextOverflow.ellipsis)),
         if (((widget.pieChartSrc ?? 'null') != 'null') &&
             (widget.withPieChart ?? false))
@@ -118,13 +117,13 @@ class _BasicBigWordState extends State<BasicBigWord> {
 }
 
 class BasicPhonetic extends StatefulWidget {
-  BasicPhonetic(this.phonetic, {this.word, this.read, Key? key}) : super(key: key);
+  const BasicPhonetic(this.phonetic, {this.word, this.read, Key? key}) : super(key: key);
 
-  String phonetic;
+  final String phonetic;
 
-  bool? read;
+  final bool? read;
 
-  late String? word;
+  final String? word;
 
   @override
   State<BasicPhonetic> createState() => _BasicPhoneticState();

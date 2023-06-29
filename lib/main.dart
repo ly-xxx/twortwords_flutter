@@ -79,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    CommonPreferences.lastDaySigned.value = 0;
+    // CommonPreferences.lastDaySigned.value = 0;
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       TextUtil.init(
